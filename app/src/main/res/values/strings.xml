@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">final</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_pageitem">pageitem</string>
+    <string name="textView3">使用者的物品清單</string>
+    <string name="itemlist">物品列表</string>
+    <string name="newitem">新增物品</string>
+    <string name="delitem">刪除物品</string>
+    <string name="Home">Home</string>
+    <string name="now">目前使用者:</string>
+    <string name="user">NULL</string>
+    <string name="bluetoothset">藍芽設定</string>
+    <string name="itemset">物品設定</string>
+</resources>
