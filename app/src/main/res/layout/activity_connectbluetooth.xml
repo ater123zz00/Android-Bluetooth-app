@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/devicesListView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".connectbluetooth">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/editcode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="textPersonName" />
+
+        <Button
+            android:id="@+id/send"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Send" />
+
+        <TextView
+            android:id="@+id/readBuffer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="DATA" />
+
+        <TextView
+            android:id="@+id/bluetoothStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="State" />
+
+        <Button
+            android:id="@+id/on"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ON" />
+
+        <Button
+            android:id="@+id/off"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="OFF" />
+
+        <Button
+            android:id="@+id/Pair"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pair" />
+
+        <Button
+            android:id="@+id/Discover"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Discover" />
+
+        <ListView
+            android:id="@+id/devicesListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </LinearLayout>
+
+</android.support.constraint.ConstraintLayout>

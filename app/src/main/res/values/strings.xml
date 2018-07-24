@@ -11,4 +11,5 @@
     <string name="user">NULL</string>
     <string name="bluetoothset">藍芽設定</string>
     <string name="itemset">物品設定</string>
+    <string name="title_activity_bluetooth">bluetooth</string>
 </resources>
