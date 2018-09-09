@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".pageitem">
 
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="567dp"
@@ -59,10 +60,18 @@
                 android:text="@string/delitem" />
         </LinearLayout>
 
-        <ListView
-            android:id="@+id/List"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <ListView
+                android:id="@+id/List"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#ffffff">
+            </ListView>
+        </LinearLayout>
 
     </LinearLayout>
 

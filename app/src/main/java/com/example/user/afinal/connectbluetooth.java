@@ -15,17 +15,19 @@ import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,6 +35,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.UUID;
+import java.text.SimpleDateFormat;
 
 public class connectbluetooth extends AppCompatActivity {
 
@@ -50,6 +53,12 @@ public class connectbluetooth extends AppCompatActivity {
     private EditText inputdata;
     private Button sendDevice;
 
+    private Button timeBtn;
+    private Button setBtn;
+    private Button setOverBtn;
+    private Button homeBtn;
+
+    private TextView collect;
     private Handler mHandler;
     // Our main handler that will receive callback notifications
     private ConnectedThread mConnectedThread;
@@ -65,21 +74,42 @@ public class connectbluetooth extends AppCompatActivity {
     private final static int MESSAGE_READ = 2; // used in bluetooth handler to identify message update
     private final static int CONNECTING_STATUS = 3; // used in bluetooth handler to identify message status
 
+    private final static int Record_Mode = 1;
+    private final static int Setting_Mode = 2;
+
+    private  String _recieveData = "";
+
+    static private String[] item = new String[20];
+    static private String[] tag = new String[20];
+
+    private int number =0;
+    private int Mode_number =Setting_Mode;
+
+    private String Data_filename = "DataFile.txt";
+    private String Record_filename = "RecordFile.txt";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connectbluetooth);
-
+        //初始化元件
         mBluetoothStatus = (TextView) findViewById(R.id.bluetoothStatus);
         mReadBuffer = (TextView) findViewById(R.id.readBuffer);
+        collect = (TextView) findViewById(R.id.collect);
+
         mScanBtn = (Button) findViewById(R.id.scan);
         mOffBtn = (Button) findViewById(R.id.off);
         mDiscoverBtn = (Button) findViewById(R.id.discover);
         mListPairedDevicesBtn = (Button) findViewById(R.id.PairedBtn);
-        inputdata = (EditText)findViewById(R.id.editText);
+        inputdata = (EditText)findViewById(R.id.editText2);
         sendDevice = (Button)findViewById(R.id.send);
 
+        timeBtn = (Button) findViewById(R.id.buttontime);
+        setBtn = (Button) findViewById(R.id.buttonset);
+        setOverBtn = (Button) findViewById(R.id.buttonsetOver);
+        homeBtn = (Button) findViewById(R.id.buttonRhome);
+
+        mReadBuffer.setMaxLines(50);
         mBTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         mBTAdapter = BluetoothAdapter.getDefaultAdapter(); // get a handle on the bluetooth radio
 
@@ -87,6 +117,10 @@ public class connectbluetooth extends AppCompatActivity {
         mDevicesListView.setAdapter(mBTArrayAdapter); // assign model to view
         mDevicesListView.setOnItemClickListener(mDeviceClickListener);
 
+        number =0;
+        Mode_number =Setting_Mode;
+
+        if(readData());
         // 詢問藍芽裝置權限
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
@@ -95,13 +129,19 @@ public class connectbluetooth extends AppCompatActivity {
         mHandler = new Handler() {
             public void handleMessage(android.os.Message msg) {
                 if (msg.what == MESSAGE_READ) {//收到MESSAGE_READ 開始接收資料
-                    String readMessage = null;
+
                     try {
+                        String readMessage = null;
                         readMessage = new String((byte[]) msg.obj, "UTF-8");
+                        _recieveData = readMessage;
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }
-                    mReadBuffer.setText(readMessage);
+                    //mReadBuffer.setText(_recieveData);
+                    collect.setText(_recieveData);
+                    //checkRecord();
+                    mReadBuffer.append(_recieveData);
+
                 }
 
                 if (msg.what == CONNECTING_STATUS) {
@@ -112,19 +152,23 @@ public class connectbluetooth extends AppCompatActivity {
                 }
             }
         };
+        homeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent();
+                intent.setClass(connectbluetooth.this,MainActivity.class);
+                startActivity(intent);
+            }
+        });
 
-        if (mBTArrayAdapter == null) {
-            // Device does not support Bluetooth
-            mBluetoothStatus.setText("Status: Bluetooth not found");
-            Toast.makeText(getApplicationContext(), "Bluetooth device not found!", Toast.LENGTH_SHORT).show();
-        } else {
             sendDevice.setOnClickListener(new View.OnClickListener(){
-                //當按下send開始傳輸資料
+
                 @Override
                 public void onClick(View v){
-                    if(mConnectedThread != null) //First check to make sure thread created
-                        mConnectedThread.write(inputdata.getText().toString());
-                    //傳送將輸入的資料出去
+                    item[number] = inputdata.getText().toString();
+                    tag[number] = collect.getText().toString();
+                    collect.setText("設定成功!");
+                    number++;
                 }
             });
 
@@ -154,7 +198,57 @@ public class connectbluetooth extends AppCompatActivity {
                     discover(v);
                 }
             });
-        }
+
+            setBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Mode_number = Setting_Mode;
+                    if(mConnectedThread != null) //First check to make sure thread created
+                        mConnectedThread.write("set");
+                    mReadBuffer.append("set\n");
+                }
+            });
+
+            setOverBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Mode_number = Record_Mode;
+                    if(mConnectedThread != null) //First check to make sure thread created
+                        mConnectedThread.write("setOver");
+                    mReadBuffer.append("setOver\n");
+                    writeData();
+                }
+            });
+
+            timeBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+                    String date = sDateFormat.format(new java.util.Date());
+                    if(mConnectedThread != null) //First check to make sure thread created
+                        mConnectedThread.write(date);
+                    mReadBuffer.append(date+"\n");
+                }
+            });
+
+            collect.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    checkRecord(s.toString());
+                }
+            });
+
+
     }
 
     private void bluetoothOn(View view) {
@@ -250,10 +344,11 @@ public class connectbluetooth extends AppCompatActivity {
             new Thread() {
                 public void run() {
                     boolean fail = false;
-
+                    //取得裝置MAC找到連接的藍芽裝置
                     BluetoothDevice device = mBTAdapter.getRemoteDevice(address);
 
                     try {
+                        //建立藍芽socket
                         mBTSocket = createBluetoothSocket(device);
                     } catch (IOException e) {
                         fail = true;
@@ -261,11 +356,13 @@ public class connectbluetooth extends AppCompatActivity {
                     }
                     // Establish the Bluetooth socket connection.
                     try {
+                        //建立藍芽連線
                         mBTSocket.connect();
                     } catch (IOException e) {
                         try {
                             fail = true;
-                            mBTSocket.close();
+                            mBTSocket.close(); //關閉socket
+                            //開啟執行緒 顯示訊息
                             mHandler.obtainMessage(CONNECTING_STATUS, -1, -1)
                                     .sendToTarget();
                         } catch (IOException e2) {
@@ -274,9 +371,10 @@ public class connectbluetooth extends AppCompatActivity {
                         }
                     }
                     if (fail == false) {
+                        //開啟執行緒用於傳輸及接收資料
                         mConnectedThread = new ConnectedThread(mBTSocket);
                         mConnectedThread.start();
-
+                        //開啟新執行緒顯示連接裝置名稱
                         mHandler.obtainMessage(CONNECTING_STATUS, 1, -1, name)
                                 .sendToTarget();
                     }
@@ -293,6 +391,7 @@ public class connectbluetooth extends AppCompatActivity {
 
         }
         return device.createRfcommSocketToServiceRecord(BTMODULEUUID);
+        //creates secure outgoing connection with BT device using UUID
     }
 
     private class ConnectedThread extends Thread {
@@ -318,20 +417,22 @@ public class connectbluetooth extends AppCompatActivity {
         }
 
         public void run() {
-            byte[] buffer = new byte[1024];  // buffer store for the stream
+            byte[] buffer = new byte[1024];
+            // buffer store for the stream
             int bytes; // bytes returned from read()
             // Keep listening to the InputStream until an exception occurs
             while (true) {
                 try {
                     // Read from the InputStream
                     bytes = mmInStream.available();
-                    if (bytes != 0) {
-                        buffer = new byte[1024];
+                    if (bytes > 0) {
                         SystemClock.sleep(100); //pause and wait for rest of data. Adjust this depending on your sending speed.
                         bytes = mmInStream.available(); // how many bytes are ready to be read?
                         bytes = mmInStream.read(buffer, 0, bytes); // record how many bytes we actually read
-                        mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer)
-                                .sendToTarget(); // Send the obtained bytes to the UI activity
+
+                        byte[] buffer2 = new byte[1024];
+                        for(int i=0;i<bytes;i++)buffer2[i]=buffer[i];
+                        mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer2).sendToTarget(); // Send the obtained bytes to the UI activity
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -355,6 +456,79 @@ public class connectbluetooth extends AppCompatActivity {
             try {
                 mmSocket.close();
             } catch (IOException e) {
+            }
+        }
+    }
+
+    private boolean readData() {
+        if (getFilesDir().exists()) {
+            try {
+                FileInputStream inputStream = openFileInput(Data_filename);
+                byte[] readBytes = new byte[inputStream.available()];
+                inputStream.read(readBytes);
+                String readString = new String(readBytes);
+                String[] content = readString.split("\r\n");
+                for (int i = 0, j = 0; i < content.length - 1; i++) {
+                    if (content[i] == "") continue;
+                    if (i % 2 == 0) item[j] = content[i];
+                    else {
+                        tag[j] = content[i];
+                        j++;
+                    }
+                }
+                inputStream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return true;
+        } else return false;
+    }
+    private void writeData(){
+        try {
+            FileOutputStream outputStream = openFileOutput(Data_filename, Context.MODE_PRIVATE);
+            for(int i = 0 ; i < number ; i++){
+                if (item[i]==null)continue;
+                //SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                //String date = sDateFormat.format(new java.util.Date());
+                outputStream.write(item[i].getBytes());
+                outputStream.write("\r\n".getBytes());
+                outputStream.write(tag[i].getBytes());
+                //outputStream.write("\r\n".getBytes());
+            }
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void writeRecord(int tag_number){
+        try {
+            FileOutputStream outputStream = openFileOutput(Record_filename, Context.MODE_APPEND);
+
+                SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                String date = sDateFormat.format(new java.util.Date());
+                outputStream.write(date.getBytes());
+                outputStream.write("\r\n".getBytes());
+                outputStream.write(tag[tag_number].getBytes());
+                outputStream.write("\r\n".getBytes());
+
+            mBluetoothStatus.setText(tag_number);
+            outputStream.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void checkRecord(String s) {
+
+        if (Mode_number == Record_Mode) {
+            for(int i=0;i<number;i++){
+                if(s.equals(tag[i]))writeRecord(i);
+            }
+            if(s.equals("check\r\n")){
+                if(mConnectedThread != null) //First check to make sure thread created
+                    mConnectedThread.write("y");
             }
         }
     }

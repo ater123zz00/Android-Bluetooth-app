@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
@@ -35,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,12 +49,12 @@ public class pageitem extends AppCompatActivity {
     private AlertDialog dialog;
     static private String[] item = new String[20];
     static private String[] tag = new String[20];
+
     private int currentPosition;
     private int linenew;
 
     private String filename = "DataFile.txt";
-    private String filepath = "MyFileStorage";
-    private File file;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,8 +120,8 @@ public class pageitem extends AppCompatActivity {
                 new String[]{"item" , "tag"} ,
                 new int[]{android.R.id.text1 , android.R.id.text2});
         // 5個參數 : context , List , layout , key1 & key2 , text1 & text2
-        listView.setAdapter(listAdapter);
 
+        listView.setAdapter(listAdapter);
         //列表長按監聽器
         listView.setOnItemLongClickListener(new OnItemLongClickListener() {
 
@@ -200,6 +202,8 @@ public class pageitem extends AppCompatActivity {
             FileOutputStream outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
             for(int i = 0 ; i < item.length ; i++){
                 if (item[i]==null)continue;
+                //SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                //String date = sDateFormat.format(new java.util.Date());
                 outputStream.write(item[i].getBytes());
                 outputStream.write("\r\n".getBytes());
                 outputStream.write(tag[i].getBytes());
@@ -211,16 +215,17 @@ public class pageitem extends AppCompatActivity {
         }
     }
     //資料讀取
-    private boolean readData(){
-        if( getFilesDir().exists()) {
+    private boolean readData() {
+        if (getFilesDir().exists()) {
             try {
                 FileInputStream inputStream = openFileInput(filename);
-                byte[] readBytes =new byte[inputStream.available()];
-               inputStream.read(readBytes);
-                String readString =new String(readBytes);
+                byte[] readBytes = new byte[inputStream.available()];
+                inputStream.read(readBytes);
+                String readString = new String(readBytes);
                 String[] content = readString.split("\r\n");
-                for (int i = 0,j = 0; i < content.length; i++) {
-                    if(i%2 == 0)item[j] = content[i];
+                for (int i = 0, j = 0; i < content.length - 1; i++) {
+                    if (content[i] == "") continue;
+                    if (i % 2 == 0) item[j] = content[i];
                     else {
                         tag[j] = content[i];
                         j++;
@@ -231,7 +236,7 @@ public class pageitem extends AppCompatActivity {
                 e.printStackTrace();
             }
             return true;
-        }
-        else return false;
+        } else return false;
     }
+
 }
