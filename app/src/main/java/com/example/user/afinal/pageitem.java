@@ -49,11 +49,13 @@ public class pageitem extends AppCompatActivity {
     private AlertDialog dialog;
     static private String[] item = new String[20];
     static private String[] tag = new String[20];
+    private int[] times = new int[20];
 
     private int currentPosition;
     private int linenew;
 
-    private String filename = "DataFile.txt";
+    private String Data_filename = "DataFile.txt";
+    private String Record_filename = "RecordFile.txt";
 
 
     @Override
@@ -65,6 +67,7 @@ public class pageitem extends AppCompatActivity {
         Button buttonhome = (Button) findViewById(R.id.buttonback);
         Button buttonnew = (Button) findViewById(R.id.buttonnew);
         Button buttondel = (Button) findViewById(R.id.buttondel);
+        TextView user_in = (TextView) findViewById(R.id.user);
 
         buttonhome.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -72,6 +75,7 @@ public class pageitem extends AppCompatActivity {
                 Intent intent = new Intent();
                 intent.setClass(pageitem.this,MainActivity.class);
                 startActivity(intent);
+                pageitem.this.finish();
             }
         });
         buttonnew.setOnClickListener(new View.OnClickListener() {
@@ -98,6 +102,19 @@ public class pageitem extends AppCompatActivity {
             item[0]="物品1";item[1]="物品2";item[2]="物品3";
             tag[0]="tag001";tag[1]="tag002";tag[2]="tag003";
         }
+        for(int i=0;i<20;i++){times[i]=0;}
+        readRecord();
+        for(int i=0;i<20;i++){
+            if(item[i]==null)continue;
+            if(times[i] == 0){}
+            else if(times[i] % 2 == 0){
+                item[i] =item[i]+"IN";
+            }
+            else{
+                item[i] =item[i]+"OUT";
+            }
+        }
+
         //List 使用
         listView = (ListView) findViewById(R.id.List);
         list = new ArrayList<>();
@@ -199,7 +216,7 @@ public class pageitem extends AppCompatActivity {
     // 資料寫入
     private void writeData(){
         try {
-            FileOutputStream outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
+            FileOutputStream outputStream = openFileOutput(Data_filename, Context.MODE_PRIVATE);
             for(int i = 0 ; i < item.length ; i++){
                 if (item[i]==null)continue;
                 //SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
@@ -218,12 +235,12 @@ public class pageitem extends AppCompatActivity {
     private boolean readData() {
         if (getFilesDir().exists()) {
             try {
-                FileInputStream inputStream = openFileInput(filename);
+                FileInputStream inputStream = openFileInput(Data_filename);
                 byte[] readBytes = new byte[inputStream.available()];
                 inputStream.read(readBytes);
                 String readString = new String(readBytes);
                 String[] content = readString.split("\r\n");
-                for (int i = 0, j = 0; i < content.length - 1; i++) {
+                for (int i = 0, j = 0; i < content.length; i++) {
                     if (content[i] == "") continue;
                     if (i % 2 == 0) item[j] = content[i];
                     else {
@@ -238,5 +255,24 @@ public class pageitem extends AppCompatActivity {
             return true;
         } else return false;
     }
+    private void readRecord() {
+        if( getFilesDir().exists()) {
+            try {
+                FileInputStream inputStream = openFileInput(Record_filename);
+                byte[] readBytes =new byte[inputStream.available()];
+                inputStream.read(readBytes);
+                String readString =new String(readBytes);
+                String[] content = readString.split("\r\n");
+                for (int i = 0; i < content.length; i++) {
+                        for(int j=0;j<20;j++){
+                            if(content[i].equals(tag[j]))times[j]++;
+                        }
+                }
+                inputStream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
+        }
+    }
 }

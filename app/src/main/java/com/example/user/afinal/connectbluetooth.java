@@ -77,7 +77,7 @@ public class connectbluetooth extends AppCompatActivity {
     private final static int Record_Mode = 1;
     private final static int Setting_Mode = 2;
 
-    private  String _recieveData = "";
+    private  String[] _recieveData;
 
     static private String[] item = new String[20];
     static private String[] tag = new String[20];
@@ -120,7 +120,7 @@ public class connectbluetooth extends AppCompatActivity {
         number =0;
         Mode_number =Setting_Mode;
 
-        if(readData());
+
         // 詢問藍芽裝置權限
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
@@ -133,14 +133,18 @@ public class connectbluetooth extends AppCompatActivity {
                     try {
                         String readMessage = null;
                         readMessage = new String((byte[]) msg.obj, "UTF-8");
-                        _recieveData = readMessage;
+                        _recieveData = readMessage.split("\r");
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }
-                    //mReadBuffer.setText(_recieveData);
-                    collect.setText(_recieveData);
-                    //checkRecord();
-                    mReadBuffer.append(_recieveData);
+                    if(_recieveData[0].equals("check")){
+                        if(mConnectedThread != null)  //First check to make sure thread created
+                            mConnectedThread.write("y");
+                    }
+                    collect.setText(_recieveData[0]);
+                    _recieveData[0] += "\r\n";
+                    mReadBuffer.append(_recieveData[0]);
+
 
                 }
 
@@ -158,6 +162,7 @@ public class connectbluetooth extends AppCompatActivity {
                 Intent intent = new Intent();
                 intent.setClass(connectbluetooth.this,MainActivity.class);
                 startActivity(intent);
+                connectbluetooth.this.finish();
             }
         });
 
@@ -228,6 +233,13 @@ public class connectbluetooth extends AppCompatActivity {
                     if(mConnectedThread != null) //First check to make sure thread created
                         mConnectedThread.write(date);
                     mReadBuffer.append(date+"\n");
+                    if(readData()){
+                        if(tag[0]==""){}
+                        else {
+                            mReadBuffer.append("載入物品清單\r\n");
+                        }
+                    };
+                    Mode_number = Record_Mode;
                 }
             });
 
@@ -468,12 +480,12 @@ public class connectbluetooth extends AppCompatActivity {
                 inputStream.read(readBytes);
                 String readString = new String(readBytes);
                 String[] content = readString.split("\r\n");
-                for (int i = 0, j = 0; i < content.length - 1; i++) {
+                for (int i = 0, j = 0; i < content.length; i++) {
                     if (content[i] == "") continue;
                     if (i % 2 == 0) item[j] = content[i];
                     else {
                         tag[j] = content[i];
-                        j++;
+                        j++;number++;
                     }
                 }
                 inputStream.close();
@@ -493,7 +505,7 @@ public class connectbluetooth extends AppCompatActivity {
                 outputStream.write(item[i].getBytes());
                 outputStream.write("\r\n".getBytes());
                 outputStream.write(tag[i].getBytes());
-                //outputStream.write("\r\n".getBytes());
+                outputStream.write("\r\n".getBytes());
             }
             outputStream.close();
         } catch (Exception e) {
@@ -521,14 +533,9 @@ public class connectbluetooth extends AppCompatActivity {
     }
 
     private void checkRecord(String s) {
-
         if (Mode_number == Record_Mode) {
             for(int i=0;i<number;i++){
                 if(s.equals(tag[i]))writeRecord(i);
-            }
-            if(s.equals("check\r\n")){
-                if(mConnectedThread != null) //First check to make sure thread created
-                    mConnectedThread.write("y");
             }
         }
     }

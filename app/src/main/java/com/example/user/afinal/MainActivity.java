@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent();
                 intent.setClass(MainActivity.this,pageitem.class);
                 startActivity(intent);
+                MainActivity.this.finish();
             }
         });
 
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent2 = new Intent();
                 intent2.setClass(MainActivity.this,connectbluetooth.class);
                 startActivity(intent2);
+                MainActivity.this.finish();
             }
         });
 
