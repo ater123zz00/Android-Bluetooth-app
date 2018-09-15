@@ -17,6 +17,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -95,6 +96,7 @@ public class connectbluetooth extends AppCompatActivity {
         //初始化元件
         mBluetoothStatus = (TextView) findViewById(R.id.bluetoothStatus);
         mReadBuffer = (TextView) findViewById(R.id.readBuffer);
+        mReadBuffer.setMovementMethod(ScrollingMovementMethod.getInstance());
         collect = (TextView) findViewById(R.id.collect);
 
         mScanBtn = (Button) findViewById(R.id.scan);
@@ -137,15 +139,22 @@ public class connectbluetooth extends AppCompatActivity {
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }
-                    if(_recieveData[0].equals("check")){
-                        if(mConnectedThread != null)  //First check to make sure thread created
-                            mConnectedThread.write("y");
+                    if(_recieveData[0].length() < 2){
+                        collect.setText("ERROR!!");
+                        mReadBuffer.append("Miss message\r\n");
                     }
-                    collect.setText(_recieveData[0]);
-                    _recieveData[0] += "\r\n";
-                    mReadBuffer.append(_recieveData[0]);
+                    else {
+                        collect.setText(_recieveData[0]);
+                        _recieveData[0] += "\r\n";
+                        mReadBuffer.append(_recieveData[0]);
 
-
+                        if (_recieveData[0].equals("check\r\n") || _recieveData[0].equals("heck")) {
+                            if (mConnectedThread != null) {
+                                mConnectedThread.write("Y");
+                                mReadBuffer.append("Y\r\n");
+                            }
+                        }
+                    }
                 }
 
                 if (msg.what == CONNECTING_STATUS) {
@@ -159,6 +168,15 @@ public class connectbluetooth extends AppCompatActivity {
         homeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //本機藍牙關閉當前連接
+                if(mBTSocket!=null) {
+                    try {
+                        mBTSocket.close();
+                    } catch (IOException e) {
+
+                    }
+                }
+                //mBTAdapter.disable();
                 Intent intent = new Intent();
                 intent.setClass(connectbluetooth.this,MainActivity.class);
                 startActivity(intent);
@@ -207,39 +225,55 @@ public class connectbluetooth extends AppCompatActivity {
             setBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if (mBTAdapter.isEnabled()) {
                     Mode_number = Setting_Mode;
                     if(mConnectedThread != null) //First check to make sure thread created
                         mConnectedThread.write("set");
                     mReadBuffer.append("set\n");
+                    }
+                    else {
+                    Toast.makeText(getApplicationContext(), "Bluetooth not on", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
 
             setOverBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if (mBTAdapter.isEnabled()) {
                     Mode_number = Record_Mode;
                     if(mConnectedThread != null) //First check to make sure thread created
                         mConnectedThread.write("setOver");
                     mReadBuffer.append("setOver\n");
                     writeData();
+                    }
+                    else {
+                        Toast.makeText(getApplicationContext(), "Bluetooth not on", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
 
             timeBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm");
-                    String date = sDateFormat.format(new java.util.Date());
-                    if(mConnectedThread != null) //First check to make sure thread created
-                        mConnectedThread.write(date);
-                    mReadBuffer.append(date+"\n");
-                    if(readData()){
-                        if(tag[0]==""){}
-                        else {
-                            mReadBuffer.append("載入物品清單\r\n");
+                    if (mBTAdapter.isEnabled()) {
+                        SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+                        String date = sDateFormat.format(new java.util.Date());
+                        if (mConnectedThread != null) //First check to make sure thread created
+                            mConnectedThread.write(date);
+                        mReadBuffer.append(date + "\n");
+                        if (readData()) {
+                            if (tag[0] == "") {
+                            } else {
+                                mReadBuffer.append("載入物品清單\r\n");
+                            }
                         }
-                    };
-                    Mode_number = Record_Mode;
+                        ;
+                        Mode_number = Record_Mode;
+                    }
+                    else {
+                        Toast.makeText(getApplicationContext(), "Bluetooth not on", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
 
@@ -259,8 +293,6 @@ public class connectbluetooth extends AppCompatActivity {
                     checkRecord(s.toString());
                 }
             });
-
-
     }
 
     private void bluetoothOn(View view) {
@@ -470,6 +502,7 @@ public class connectbluetooth extends AppCompatActivity {
             } catch (IOException e) {
             }
         }
+
     }
 
     private boolean readData() {
@@ -521,7 +554,10 @@ public class connectbluetooth extends AppCompatActivity {
                 String date = sDateFormat.format(new java.util.Date());
                 outputStream.write(date.getBytes());
                 outputStream.write("\r\n".getBytes());
+                outputStream.write(item[tag_number].getBytes());
+                outputStream.write("\r\n".getBytes());
                 outputStream.write(tag[tag_number].getBytes());
+                outputStream.write("\r\n".getBytes());
                 outputStream.write("\r\n".getBytes());
 
             mBluetoothStatus.setText(tag_number);

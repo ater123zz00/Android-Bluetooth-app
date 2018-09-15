@@ -51,9 +51,9 @@ public class pageitem extends AppCompatActivity {
     static private String[] tag = new String[20];
     private int[] times = new int[20];
 
+    private int number =0;
     private int currentPosition;
     private int linenew;
-
     private String Data_filename = "DataFile.txt";
     private String Record_filename = "RecordFile.txt";
 
@@ -67,7 +67,6 @@ public class pageitem extends AppCompatActivity {
         Button buttonhome = (Button) findViewById(R.id.buttonback);
         Button buttonnew = (Button) findViewById(R.id.buttonnew);
         Button buttondel = (Button) findViewById(R.id.buttondel);
-        TextView user_in = (TextView) findViewById(R.id.user);
 
         buttonhome.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,25 +95,25 @@ public class pageitem extends AppCompatActivity {
                 writeData();
             }
         });
+        number=0;
         if(readData()){
         }
         else {
             item[0]="物品1";item[1]="物品2";item[2]="物品3";
             tag[0]="tag001";tag[1]="tag002";tag[2]="tag003";
         }
-        for(int i=0;i<20;i++){times[i]=0;}
+        for(int i=0;i<number;i++){times[i]=0;}
         readRecord();
-        for(int i=0;i<20;i++){
-            if(item[i]==null)continue;
-            if(times[i] == 0){}
-            else if(times[i] % 2 == 0){
-                item[i] =item[i]+"IN";
+        for (int i = 0; i < number; i++) {
+                if (item[i] == null) continue;
+                if (times[i] == 0) { }
+                else if (times[i] % 2 == 0) {
+                    item[i] = item[i] + "IN_BAG";
+                }
+                else {
+                    item[i] = item[i] + "OUT_BAG";
+                }
             }
-            else{
-                item[i] =item[i]+"OUT";
-            }
-        }
-
         //List 使用
         listView = (ListView) findViewById(R.id.List);
         list = new ArrayList<>();
@@ -160,6 +159,7 @@ public class pageitem extends AppCompatActivity {
         final EditText edit = (EditText) contview.findViewById(R.id.edit_dialog);
         final EditText edit2 = (EditText) contview.findViewById(R.id.edit_dialog2);
         Button btOK = (Button) contview.findViewById(R.id.btOK_dialog);
+        Button btDEL = (Button) contview.findViewById(R.id.btDEL_dialog);
         btOK.setOnClickListener(new OnClickListener() {
 
             @Override
@@ -179,6 +179,12 @@ public class pageitem extends AppCompatActivity {
                 dialog.dismiss();
             }
         });
+        btDEL.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
         dialog = new AlertDialog.Builder(pageitem.this).setView(contview)
                 .create();
     }
@@ -190,8 +196,8 @@ public class pageitem extends AppCompatActivity {
         final EditText edit = (EditText) contview.findViewById(R.id.edit_dialog);
         final EditText edit2 = (EditText) contview.findViewById(R.id.edit_dialog2);
         Button btOK = (Button) contview.findViewById(R.id.btOK_dialog);
+        Button btDEL = (Button) contview.findViewById(R.id.btDEL_dialog);
         btOK.setOnClickListener(new OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 String newitemName = edit.getText().toString();
@@ -210,6 +216,12 @@ public class pageitem extends AppCompatActivity {
                 dialog.dismiss();
             }
         });
+        btDEL.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
         dialog = new AlertDialog.Builder(pageitem.this).setView(contview)
                 .create();
     }
@@ -217,7 +229,7 @@ public class pageitem extends AppCompatActivity {
     private void writeData(){
         try {
             FileOutputStream outputStream = openFileOutput(Data_filename, Context.MODE_PRIVATE);
-            for(int i = 0 ; i < item.length ; i++){
+            for(int i = 0 ; i < number ; i++){
                 if (item[i]==null)continue;
                 //SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
                 //String date = sDateFormat.format(new java.util.Date());
@@ -241,11 +253,11 @@ public class pageitem extends AppCompatActivity {
                 String readString = new String(readBytes);
                 String[] content = readString.split("\r\n");
                 for (int i = 0, j = 0; i < content.length; i++) {
-                    if (content[i] == "") continue;
+                    if (content[i] == "" || content[i]==null) continue;
                     if (i % 2 == 0) item[j] = content[i];
                     else {
                         tag[j] = content[i];
-                        j++;
+                        j++;number++;
                     }
                 }
                 inputStream.close();

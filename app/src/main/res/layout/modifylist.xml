@@ -47,9 +47,23 @@
             android:textSize="28sp" />
     </LinearLayout>
 
-    <Button
-        android:id="@+id/btOK_dialog"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="确定" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btOK_dialog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="确定" />
+
+        <Button
+            android:id="@+id/btDEL_dialog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="取消" />
+    </LinearLayout>
 </LinearLayout>

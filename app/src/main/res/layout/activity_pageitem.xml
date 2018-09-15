@@ -68,10 +68,10 @@
             <ListView
                 android:id="@+id/List"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="#ffffff">
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:minHeight="75dp" />
 
-            </ListView>
         </LinearLayout>
 
     </LinearLayout>
