@@ -3,12 +3,14 @@ package com.example.user.afinal;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -60,6 +62,7 @@ public class connectbluetooth extends AppCompatActivity {
     private Button homeBtn;
 
     private TextView collect;
+    private BluetoothManager bluetoothManager;
     private Handler mHandler;
     // Our main handler that will receive callback notifications
     private ConnectedThread mConnectedThread;
@@ -113,7 +116,9 @@ public class connectbluetooth extends AppCompatActivity {
 
         mReadBuffer.setMaxLines(50);
         mBTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-        mBTAdapter = BluetoothAdapter.getDefaultAdapter(); // get a handle on the bluetooth radio
+        bluetoothManager =   (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        if (bluetoothManager != null)
+            mBTAdapter = BluetoothAdapter.getDefaultAdapter(); // get a handle on the bluetooth radio
 
         mDevicesListView = (ListView) findViewById(R.id.devicesListView);
         mDevicesListView.setAdapter(mBTArrayAdapter); // assign model to view
@@ -135,26 +140,23 @@ public class connectbluetooth extends AppCompatActivity {
                     try {
                         String readMessage = null;
                         readMessage = new String((byte[]) msg.obj, "UTF-8");
-                        _recieveData = readMessage.split("\r");
+                        _recieveData = readMessage.split("\r\n");
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }
-                    if(_recieveData[0].length() < 2){
-                        collect.setText("ERROR!!");
-                        mReadBuffer.append("Miss message\r\n");
-                    }
-                    else {
+
                         collect.setText(_recieveData[0]);
                         _recieveData[0] += "\r\n";
                         mReadBuffer.append(_recieveData[0]);
 
-                        if (_recieveData[0].equals("check\r\n") || _recieveData[0].equals("heck")) {
+
+                        if (_recieveData[0].equals("check\r\n")) {
                             if (mConnectedThread != null) {
                                 mConnectedThread.write("Y");
                                 mReadBuffer.append("Y\r\n");
                             }
                         }
-                    }
+
                 }
 
                 if (msg.what == CONNECTING_STATUS) {
@@ -168,13 +170,9 @@ public class connectbluetooth extends AppCompatActivity {
         homeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //本機藍牙關閉當前連接
-                if(mBTSocket!=null) {
-                    try {
-                        mBTSocket.close();
-                    } catch (IOException e) {
-
-                    }
+                if(mBTSocket != null){
+                    try{mBTSocket.close();}
+                    catch (IOException e){}
                 }
                 //mBTAdapter.disable();
                 Intent intent = new Intent();
@@ -293,6 +291,7 @@ public class connectbluetooth extends AppCompatActivity {
                     checkRecord(s.toString());
                 }
             });
+            autoConnect();
     }
 
     private void bluetoothOn(View view) {
@@ -470,13 +469,11 @@ public class connectbluetooth extends AppCompatActivity {
                     // Read from the InputStream
                     bytes = mmInStream.available();
                     if (bytes > 0) {
-                        SystemClock.sleep(100); //pause and wait for rest of data. Adjust this depending on your sending speed.
+                        SystemClock.sleep(1000); //pause and wait for rest of data. Adjust this depending on your sending speed.
                         bytes = mmInStream.available(); // how many bytes are ready to be read?
                         bytes = mmInStream.read(buffer, 0, bytes); // record how many bytes we actually read
 
-                        byte[] buffer2 = new byte[1024];
-                        for(int i=0;i<bytes;i++)buffer2[i]=buffer[i];
-                        mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer2).sendToTarget(); // Send the obtained bytes to the UI activity
+                        mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget(); // Send the obtained bytes to the UI activity
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -574,5 +571,51 @@ public class connectbluetooth extends AppCompatActivity {
                 if(s.equals(tag[i]))writeRecord(i);
             }
         }
+    }
+
+    public void autoConnect(){
+        final String address = "98:D3:32:21:2E:85";
+        final String name = "Recover Connection";
+
+        // Spawn a new thread to avoid blocking the GUI one
+        new Thread() {
+            public void run() {
+                boolean fail = false;
+                //取得裝置MAC找到連接的藍芽裝置
+                BluetoothDevice device = mBTAdapter.getRemoteDevice(address);
+
+                try {
+                    //建立藍芽socket
+                    mBTSocket = createBluetoothSocket(device);
+                } catch (IOException e) {
+                    fail = true;
+                    Toast.makeText(getBaseContext(), "Socket creation failed", Toast.LENGTH_SHORT).show();
+                }
+                // Establish the Bluetooth socket connection.
+                try {
+                    //建立藍芽連線
+                    mBTSocket.connect();
+                } catch (IOException e) {
+                    try {
+                        fail = true;
+                        mBTSocket.close(); //關閉socket
+                        //開啟執行緒 顯示訊息
+                        mHandler.obtainMessage(CONNECTING_STATUS, -1, -1)
+                                .sendToTarget();
+                    } catch (IOException e2) {
+                        //insert code to deal with this
+                        Toast.makeText(getBaseContext(), "Socket creation failed", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                if (fail == false) {
+                    //開啟執行緒用於傳輸及接收資料
+                    mConnectedThread = new ConnectedThread(mBTSocket);
+                    mConnectedThread.start();
+                    //開啟新執行緒顯示連接裝置名稱
+                    mHandler.obtainMessage(CONNECTING_STATUS, 1, -1, name)
+                            .sendToTarget();
+                }
+            }
+        }.start();
     }
 }

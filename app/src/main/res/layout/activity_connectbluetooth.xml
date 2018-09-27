@@ -45,7 +45,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="物品名稱" />
+            android:text="設定名稱" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -57,21 +57,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Start" />
+                android:text="開始" />
 
             <Button
                 android:id="@+id/buttonset"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Set" />
+                android:text="設定" />
 
             <Button
                 android:id="@+id/buttonsetOver"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="setOver" />
+                android:text="設定完成" />
 
             <TextView
                 android:id="@+id/collect"
