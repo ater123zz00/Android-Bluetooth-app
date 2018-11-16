@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">final</string>
+    <string name="app_name">智慧包包</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_pageitem">pageitem</string>
     <string name="textView3">使用者的物品清單</string>
