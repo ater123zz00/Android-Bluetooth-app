@@ -156,14 +156,18 @@ public class connectbluetooth extends AppCompatActivity {
                         e.printStackTrace();
                     }
 
+                    int i = 0;
                     for(String s :  _recieveData) {
-
                         collect.setText(s);
                         mReadBuffer.append(s + "\r\n");
                         checkRecord(s);
-                        if(s.equals("0")||s.equals("1")){break;}
+                        if(s.equals("0")||s.equals("1"))break;
+                        if(Mode_number == Setting_Mode){
+                            collect.setText(_recieveData[0]);
+                            break;
+                            }
                         }
-                    }
+                }
 
 
 
@@ -177,19 +181,19 @@ public class connectbluetooth extends AppCompatActivity {
         };
 
         final Handler Timerhandler = new Handler();
-        final Runnable runnable4 = new Runnable() {
+        final Runnable runnableClose = new Runnable() {
             @Override
             public void run() {
                closeBT();
             }
         };
-        final Runnable runnable3 = new Runnable() {
+        final Runnable runnable_GetCheck = new Runnable() {
             @Override
             public void run() {
                 TimerGetCheck();
             }
         };
-        final Runnable runnable2 = new Runnable() {
+        final Runnable runnable_GetRecord = new Runnable() {
             @Override
             public void run() {
                 TimerGetRecord();
@@ -199,9 +203,10 @@ public class connectbluetooth extends AppCompatActivity {
             @Override
             public void run() {
                 if(mBTSocket==null || (!mBTSocket.isConnected()) )autoConnect();
-                Timerhandler.postDelayed(runnable2,3000);
-                Timerhandler.postDelayed(runnable3,6000);
-                Timerhandler.postDelayed(runnable4,10000);
+                Timerhandler.postDelayed(runnable_GetRecord,3000);
+                Timerhandler.postDelayed(runnable_GetCheck,6000);
+                Timerhandler.postDelayed(runnableClose,10000);
+                // 30s 後呼叫自身
                 Timerhandler.postDelayed(this,30000);
             }
         };
@@ -307,7 +312,6 @@ public class connectbluetooth extends AppCompatActivity {
                 EXIT_door();
             }
         });
-
             beDectected();
     }
 
@@ -527,6 +531,7 @@ public class connectbluetooth extends AppCompatActivity {
                 inputStream.read(readBytes);
                 String readString = new String(readBytes);
                 String[] content = readString.split("\r\n");
+                number = 0;
                 for (int i = 0, j = 0; i < content.length; i++) {
                     if (content[i] == "") continue;
                     if (i % 2 == 0) item[j] = content[i];
@@ -614,7 +619,7 @@ public class connectbluetooth extends AppCompatActivity {
 
     public void autoConnect(){
         final String address = "98:D3:32:21:2E:85";
-        final String name = "AUTO_Connection";
+        final String name = "Bag";
 
 
         mBluetoothStatus.setText("Connecting...");

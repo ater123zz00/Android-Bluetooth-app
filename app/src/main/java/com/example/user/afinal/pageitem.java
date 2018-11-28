@@ -160,6 +160,8 @@ public class pageitem extends AppCompatActivity {
         final EditText edit2 = (EditText) contview.findViewById(R.id.edit_dialog2);
         Button btOK = (Button) contview.findViewById(R.id.btOK_dialog);
         Button btDEL = (Button) contview.findViewById(R.id.btDEL_dialog);
+        edit.setText(item[currentPosition]);
+        edit2.setText(tag[currentPosition]);
         btOK.setOnClickListener(new OnClickListener() {
 
             @Override
@@ -204,6 +206,7 @@ public class pageitem extends AppCompatActivity {
                 String newtagName = edit2.getText().toString();
                 item[linenew] = newitemName;
                 tag[linenew] = newtagName;
+                number++;
                 writeData();
                 linenew++;
                 HashMap<String , String> hashMap = new HashMap<>();
